@@ -1,10 +1,15 @@
 import 'dart:math';
 
+import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterfire_game/game.dart';
 
-class Player extends SpriteComponent with HasGameRef<MySimpleGame> {
+class Player extends SpriteComponent with HasGameRef<MySimpleGame>, CollisionCallbacks {
+  bool collided = false;
+  JoystickDirection collidedDirection = JoystickDirection.idle;
+  Vector2 collidedDelta = Vector2.zero();
+
   final Vector2 minBounds = Vector2(-1500, -1500);
   final Vector2 maxBounds = Vector2(1500, 1500);
 
@@ -20,38 +25,58 @@ class Player extends SpriteComponent with HasGameRef<MySimpleGame> {
     position = Vector2(0, 0); // Initial position.
     anchor = Anchor.center; // Anchor the player in the center.
     nativeAngle = -pi / 2; // Set the initial angle to point up.
+    add(CircleHitbox()..collisionType = CollisionType.active); // Adds a rectangular hitbox
   }
 
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    // final paint = Paint()..color = Colors.red;
-    // canvas.drawRect(size.toRect(), paint); // Draw a blue square.
   }
 
   @override
   void update(double dt) {
     super.update(dt);
 
-    // Move the player based on joystick input
     if (joystick.direction != JoystickDirection.idle) {
-      position.add(joystick.relativeDelta * speed * dt);
-      position.clamp(minBounds, maxBounds); // Clamp the player position to the bounds.
+      final joyDelta = joystick.relativeDelta.clone();
+
+      // Directions are same, then collided
+      final xCollided = collidedDelta.x * joyDelta.x > 0;
+      final yCollided = collidedDelta.y * joyDelta.y > 0;
+
+      if (xCollided) {
+        joyDelta.x = 0;
+      }
+
+      if (yCollided) {
+        joyDelta.y = 0;
+      }
+
+      position.add(joyDelta * speed * dt);
       angle = joystick.delta.screenAngle() + nativeAngle; // Rotate based on direction
     }
   }
 
-  // @override
-  // void update(double dt) {
-  //   super.update(dt);
-  //   print("update: $dt");
-  //   if (targetPosition != null) {
-  //     final direction = (targetPosition! - position).normalized();
-  //     position += direction * 100 * dt; // Move 100 units per second.
-  //     if ((targetPosition! - position).length < 1) {
-  //       position = targetPosition!;
-  //       targetPosition = null;
-  //     }
-  //   }
-  // }
+  @override
+  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
+    // Record the direction of collision
+    if (!collided) {
+      collidedDirection = joystick.direction;
+      collidedDelta = joystick.relativeDelta;
+    }
+
+    collided = true;
+
+    super.onCollision(intersectionPoints, other);
+  }
+
+  @override
+  void onCollisionEnd(PositionComponent other) {
+    // if (other is Obstacle) {
+    collided = false;
+    collidedDirection = JoystickDirection.idle;
+    collidedDelta = Vector2.zero();
+    // }
+    super.onCollisionEnd(other);
+  }
 }

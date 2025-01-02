@@ -1,15 +1,20 @@
+import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/experimental.dart';
 import 'package:flame/game.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/material.dart';
+import 'package:flutterfire_game/world_block.dart';
 import 'dart:math';
 import 'player.dart';
 
-class MySimpleGame extends FlameGame with TapDetector {
+class MySimpleGame extends FlameGame with TapDetector, HasCollisionDetection {
   late final JoystickComponent joystick;
   late final Player player;
+
+  @override
+  final debugMode = true;
 
   @override
   Future<void> onLoad() async {
@@ -46,7 +51,8 @@ class MySimpleGame extends FlameGame with TapDetector {
 
     for (var i = 0; i < xSteps; i++) {
       for (var j = 0; j < ySteps; j++) {
-        if (random.nextDouble() > 0.7) {
+        final isEdge = i == 0 || j == 0 || i == xSteps - 1 || j == ySteps - 1;
+        if (random.nextDouble() > 0.7 || isEdge) {
           final dx = blockSize * i;
           final dy = blockSize * j;
           final posX = player.minBounds.x + dx;
@@ -58,14 +64,15 @@ class MySimpleGame extends FlameGame with TapDetector {
 
           final position = Vector2(posX, posY);
           final size = Vector2(blockSize, blockSize);
-          final color = Color.fromARGB(
-            255,
-            random.nextInt(256),
-            random.nextInt(256),
-            random.nextInt(256),
-          );
-          final rectangle =
-              RectangleComponent(position: position, size: size, paint: Paint()..color = color, priority: -1);
+          final color = isEdge
+              ? Color.fromARGB(255, 33, 33, 33)
+              : Color.fromARGB(
+                  255,
+                  random.nextInt(256),
+                  random.nextInt(256),
+                  random.nextInt(256),
+                );
+          final rectangle = WorldBlock(position, size, Paint()..color = color);
           world.add(rectangle);
         }
       }
