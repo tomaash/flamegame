@@ -7,6 +7,9 @@ import 'package:flutterfire_game/game.dart';
 class Player extends SpriteComponent with HasGameRef<MySimpleGame> {
   // Vector2? targetPosition;
 
+  final Vector2 minBounds = Vector2(-500, -500);
+  final Vector2 maxBounds = Vector2(500, 500);
+
   final JoystickComponent joystick;
   double speed = 200; // Pixels per second
 
@@ -16,7 +19,7 @@ class Player extends SpriteComponent with HasGameRef<MySimpleGame> {
   Future<void> onLoad() async {
     super.onLoad();
     size = Vector2(50, 50); // Set size of the player.
-    position = Vector2(100, 100); // Initial position.
+    position = Vector2(0, 0); // Initial position.
     anchor = Anchor.center; // Anchor the player in the center.
     nativeAngle = -pi / 2; // Set the initial angle to point up.
   }
@@ -35,6 +38,7 @@ class Player extends SpriteComponent with HasGameRef<MySimpleGame> {
     // Move the player based on joystick input
     if (joystick.direction != JoystickDirection.idle) {
       position.add(joystick.relativeDelta * speed * dt);
+      position.clamp(minBounds, maxBounds); // Clamp the player position to the bounds.
       angle = joystick.delta.screenAngle() + nativeAngle; // Rotate based on direction
     }
   }

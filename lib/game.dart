@@ -1,5 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
+import 'package:flame/experimental.dart';
 import 'package:flame/game.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/material.dart';
@@ -50,7 +51,10 @@ class MySimpleGame extends FlameGame with TapDetector {
 
     world.add(player);
 
+    final shape = Rectangle.fromLTRB(player.minBounds.x, player.minBounds.y, player.maxBounds.x, player.maxBounds.y);
+
     camera = CameraComponent(world: world);
+    camera.setBounds(shape);
     add(camera);
   }
 
