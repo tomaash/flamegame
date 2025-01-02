@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "281774571125",
+    "project_id": "flutterfire-tomaash",
+    "storage_bucket": "flutterfire-tomaash.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:281774571125:android:6418b019c0c8859ce7c23c",
+        "android_client_info": {
+          "package_name": "com.tomaash.flutterfire"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXYmw-sL5JcKHUCUdDyglxdMv3VMAaz4k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
