@@ -25,37 +25,59 @@ class MySimpleGame extends FlameGame with TapDetector {
     joystick = JoystickComponent(
         knob: CircleComponent(radius: 15, paint: knobPaint),
         background: CircleComponent(radius: 50, paint: backgroundPaint),
-        margin: const EdgeInsets.only(left: 20, bottom: 20), // Position the joystick
+        margin: const EdgeInsets.only(left: 20, top: 20), // Position the joystick
         priority: 100);
 
     // final parallaxComponent =
     //     await loadParallaxComponent([ParallaxImageData('bg.jpg')], repeat: ImageRepeat.repeat, priority: -1);
 
-    final random = Random();
-    for (var i = 0; i < 100; i++) {
-      final position = Vector2(random.nextDouble() * 1000 - 500, random.nextDouble() * 1000 - 500);
-      final size = Vector2(random.nextDouble() * 100 + 20, random.nextDouble() * 100 + 20);
-      final color = Color.fromARGB(
-        255,
-        random.nextInt(256),
-        random.nextInt(256),
-        random.nextInt(256),
-      );
-      final rectangle = RectangleComponent(position: position, size: size, paint: Paint()..color = color);
-      world.add(rectangle);
-    }
-
-    add(joystick);
-
-    player = Player(joystick)..sprite = playerSprite;
+    player = Player(joystick)
+      ..sprite = playerSprite
+      ..priority = 10;
 
     world.add(player);
+
+    final random = Random();
+
+    final playerSpace = 200;
+    final double blockSize = 150;
+    final xSteps = (player.maxBounds.x - player.minBounds.x) ~/ blockSize;
+    final ySteps = (player.maxBounds.y - player.minBounds.y) ~/ blockSize;
+
+    for (var i = 0; i < xSteps; i++) {
+      for (var j = 0; j < ySteps; j++) {
+        if (random.nextDouble() > 0.7) {
+          final dx = blockSize * i;
+          final dy = blockSize * j;
+          final posX = player.minBounds.x + dx;
+          final posY = player.minBounds.y + dy;
+
+          if (posX.abs() < playerSpace && posY.abs() < playerSpace) {
+            continue;
+          }
+
+          final position = Vector2(posX, posY);
+          final size = Vector2(blockSize, blockSize);
+          final color = Color.fromARGB(
+            255,
+            random.nextInt(256),
+            random.nextInt(256),
+            random.nextInt(256),
+          );
+          final rectangle =
+              RectangleComponent(position: position, size: size, paint: Paint()..color = color, priority: -1);
+          world.add(rectangle);
+        }
+      }
+    }
 
     final shape = Rectangle.fromLTRB(player.minBounds.x, player.minBounds.y, player.maxBounds.x, player.maxBounds.y);
 
     camera = CameraComponent(world: world);
     camera.setBounds(shape);
     add(camera);
+    camera.viewport.add(joystick);
+    // add(joystick);
   }
 
   @override
@@ -63,7 +85,7 @@ class MySimpleGame extends FlameGame with TapDetector {
     super.update(dt);
 
     final visibleRect = camera.visibleWorldRect;
-    const edgeThreshold = 100;
+    const edgeThreshold = 130;
 
     // Check if player is near any screen edge
     bool isLeft = player.position.x < visibleRect.left + edgeThreshold;

@@ -5,10 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutterfire_game/game.dart';
 
 class Player extends SpriteComponent with HasGameRef<MySimpleGame> {
-  // Vector2? targetPosition;
-
-  final Vector2 minBounds = Vector2(-500, -500);
-  final Vector2 maxBounds = Vector2(500, 500);
+  final Vector2 minBounds = Vector2(-1500, -1500);
+  final Vector2 maxBounds = Vector2(1500, 1500);
 
   final JoystickComponent joystick;
   double speed = 200; // Pixels per second
