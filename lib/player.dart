@@ -7,7 +7,7 @@ import 'package:flutterfire_game/game.dart';
 
 class Player extends SpriteComponent with HasGameRef<MySimpleGame>, CollisionCallbacks {
   bool collided = false;
-  JoystickDirection collidedDirection = JoystickDirection.idle;
+  // JoystickDirection collidedDirection = JoystickDirection.idle;
   Vector2 collidedDelta = Vector2.zero();
 
   final Vector2 minBounds = Vector2(-1500, -1500);
@@ -15,6 +15,7 @@ class Player extends SpriteComponent with HasGameRef<MySimpleGame>, CollisionCal
 
   final JoystickComponent joystick;
   double speed = 200; // Pixels per second
+  Map<PositionComponent, Vector2> collidedComponents = {};
 
   Player(this.joystick);
 
@@ -36,13 +37,21 @@ class Player extends SpriteComponent with HasGameRef<MySimpleGame>, CollisionCal
   @override
   void update(double dt) {
     super.update(dt);
-
     if (joystick.direction != JoystickDirection.idle) {
       final joyDelta = joystick.relativeDelta.clone();
 
-      // Directions are same, then collided
-      final xCollided = collidedDelta.x * joyDelta.x > 0;
-      final yCollided = collidedDelta.y * joyDelta.y > 0;
+      var xCollided = false;
+      var yCollided = false;
+
+      collidedComponents.forEach((key, value) {
+        if (value.x * joyDelta.x > 0) {
+          xCollided = true;
+        }
+
+        if (value.y * joyDelta.y > 0) {
+          yCollided = true;
+        }
+      });
 
       if (xCollided) {
         joyDelta.x = 0;
@@ -57,26 +66,26 @@ class Player extends SpriteComponent with HasGameRef<MySimpleGame>, CollisionCal
     }
   }
 
+  void fire() {
+    // Implement the fire action
+    print("Fire button pressed!");
+  }
+
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
-    // Record the direction of collision
-    if (!collided) {
-      collidedDirection = joystick.direction;
-      collidedDelta = joystick.relativeDelta;
-    }
+    Vector2 cn1 = intersectionPoints.first - position;
+    Vector2 cn2 = intersectionPoints.last - position;
 
-    collided = true;
+    final collisionNormal = (cn1 + cn2) / 2;
+
+    collidedComponents[other] = collisionNormal;
 
     super.onCollision(intersectionPoints, other);
   }
 
   @override
   void onCollisionEnd(PositionComponent other) {
-    // if (other is Obstacle) {
-    collided = false;
-    collidedDirection = JoystickDirection.idle;
-    collidedDelta = Vector2.zero();
-    // }
+    collidedComponents.remove(other);
     super.onCollisionEnd(other);
   }
 }

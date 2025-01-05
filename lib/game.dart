@@ -1,4 +1,3 @@
-import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/experimental.dart';
@@ -9,12 +8,14 @@ import 'package:flutterfire_game/world_block.dart';
 import 'dart:math';
 import 'player.dart';
 
+const USE_ALTERNATIVE_CAMERA = false;
+
 class MySimpleGame extends FlameGame with TapDetector, HasCollisionDetection {
   late final JoystickComponent joystick;
   late final Player player;
 
-  @override
-  final debugMode = true;
+  // @override
+  // final debugMode = true;
 
   @override
   Future<void> onLoad() async {
@@ -30,11 +31,8 @@ class MySimpleGame extends FlameGame with TapDetector, HasCollisionDetection {
     joystick = JoystickComponent(
         knob: CircleComponent(radius: 15, paint: knobPaint),
         background: CircleComponent(radius: 50, paint: backgroundPaint),
-        margin: const EdgeInsets.only(left: 20, top: 20), // Position the joystick
+        margin: const EdgeInsets.only(right: 50, bottom: 60), // Position the joystick
         priority: 100);
-
-    // final parallaxComponent =
-    //     await loadParallaxComponent([ParallaxImageData('bg.jpg')], repeat: ImageRepeat.repeat, priority: -1);
 
     player = Player(joystick)
       ..sprite = playerSprite
@@ -84,35 +82,39 @@ class MySimpleGame extends FlameGame with TapDetector, HasCollisionDetection {
     camera.setBounds(shape);
     add(camera);
     camera.viewport.add(joystick);
-    // add(joystick);
+    if (!USE_ALTERNATIVE_CAMERA) {
+      camera.follow(player);
+    }
   }
 
   @override
   void update(double dt) {
     super.update(dt);
 
-    final visibleRect = camera.visibleWorldRect;
-    const edgeThreshold = 130;
+    if (USE_ALTERNATIVE_CAMERA) {
+      final visibleRect = camera.visibleWorldRect;
+      const edgeThreshold = 130;
 
-    // Check if player is near any screen edge
-    bool isLeft = player.position.x < visibleRect.left + edgeThreshold;
-    bool isRight = player.position.x > visibleRect.right - edgeThreshold;
-    bool isTop = player.position.y < visibleRect.top + edgeThreshold;
-    bool isBottom = player.position.y > visibleRect.bottom - edgeThreshold;
+      // Check if player is near any screen edge
+      bool isLeft = player.position.x < visibleRect.left + edgeThreshold;
+      bool isRight = player.position.x > visibleRect.right - edgeThreshold;
+      bool isTop = player.position.y < visibleRect.top + edgeThreshold;
+      bool isBottom = player.position.y > visibleRect.bottom - edgeThreshold;
 
-    final dist = player.speed * dt;
-    final dx = joystick.relativeDelta.x;
-    final dy = joystick.relativeDelta.y;
+      final dist = player.speed * dt;
+      final dx = joystick.relativeDelta.x;
+      final dy = joystick.relativeDelta.y;
 
-    final moveX = Vector2(dx * dist, 0);
-    final moveY = Vector2(0, dy * dist);
+      final moveX = Vector2(dx * dist, 0);
+      final moveY = Vector2(0, dy * dist);
 
-    if (isLeft && dx < 0 || isRight && dx > 0) {
-      camera.moveBy(moveX);
-    }
+      if (isLeft && dx < 0 || isRight && dx > 0) {
+        camera.moveBy(moveX);
+      }
 
-    if (isTop && dy < 0 || isBottom && dy > 0) {
-      camera.moveBy(moveY);
+      if (isTop && dy < 0 || isBottom && dy > 0) {
+        camera.moveBy(moveY);
+      }
     }
   }
 
