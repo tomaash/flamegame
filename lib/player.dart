@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
@@ -66,10 +65,14 @@ class Player extends SpriteComponent with HasGameRef<MySimpleGame>, CollisionCal
     }
   }
 
-  void fire() {
-    // Implement the fire action
-    print("Fire button pressed!");
-  }
+  // void fire() {
+  //   final bullet = Bullet(
+  //     position: position.clone(),
+  //     direction: Vector2(cos(angle), sin(angle)),
+  //     speed: 400,
+  //     maxDistance: 200,
+  //   );
+  // }
 
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {

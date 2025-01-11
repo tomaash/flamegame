@@ -2,17 +2,20 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/experimental.dart';
 import 'package:flame/game.dart';
+import 'package:flame/input.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterfire_game/world_block.dart';
 import 'dart:math';
 import 'player.dart';
+import 'bullet.dart';
 
 const USE_ALTERNATIVE_CAMERA = false;
 
 class MySimpleGame extends FlameGame with TapDetector, HasCollisionDetection {
   late final JoystickComponent joystick;
   late final Player player;
+  late final HudButtonComponent fireButton;
 
   // @override
   // final debugMode = true;
@@ -82,6 +85,26 @@ class MySimpleGame extends FlameGame with TapDetector, HasCollisionDetection {
     camera.setBounds(shape);
     add(camera);
     camera.viewport.add(joystick);
+
+    // Create the fire button component
+    fireButton = HudButtonComponent(
+      button: CircleComponent(radius: 30, paint: Paint()..color = Colors.red.withAlpha(150)),
+      margin: const EdgeInsets.only(right: 50, top: 50),
+      onPressed: () {
+        // Handle fire button press
+        // player.fire();
+
+        final bullet = Bullet(
+          position: player.position.clone(),
+          direction: Vector2(cos(player.angle), sin(player.angle)),
+          speed: 400,
+          maxDistance: 500,
+        );
+        world.add(bullet);
+      },
+    );
+
+    camera.viewport.add(fireButton);
     if (!USE_ALTERNATIVE_CAMERA) {
       camera.follow(player);
     }
