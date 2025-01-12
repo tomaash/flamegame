@@ -3,6 +3,7 @@ import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterfire_game/game.dart';
+import 'package:flutterfire_game/world_block.dart';
 
 class Player extends SpriteComponent with HasGameRef<MySimpleGame>, CollisionCallbacks {
   bool collided = false;
@@ -25,7 +26,7 @@ class Player extends SpriteComponent with HasGameRef<MySimpleGame>, CollisionCal
     position = Vector2(0, 0); // Initial position.
     anchor = Anchor.center; // Anchor the player in the center.
     nativeAngle = -pi / 2; // Set the initial angle to point up.
-    add(CircleHitbox()..collisionType = CollisionType.active); // Adds a rectangular hitbox
+    add(RectangleHitbox()..collisionType = CollisionType.active); // Adds a rectangular hitbox
   }
 
   @override
@@ -82,6 +83,12 @@ class Player extends SpriteComponent with HasGameRef<MySimpleGame>, CollisionCal
     final collisionNormal = (cn1 + cn2) / 2;
 
     collidedComponents[other] = collisionNormal;
+
+    if (other is WorldBlock) {
+      if (other.blockType == WorldBlockType.resetButton) {
+        gameRef.resetWorldBlocks();
+      }
+    }
 
     super.onCollision(intersectionPoints, other);
   }

@@ -1,3 +1,4 @@
+import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/experimental.dart';
@@ -12,10 +13,11 @@ import 'bullet.dart';
 
 const USE_ALTERNATIVE_CAMERA = false;
 
-class MySimpleGame extends FlameGame with TapDetector, HasCollisionDetection {
+class MySimpleGame extends FlameGame with TapDetector, HasQuadTreeCollisionDetection {
   late final JoystickComponent joystick;
   late final Player player;
   late final HudButtonComponent fireButton;
+  late Sprite playerSprite;
 
   // @override
   // final debugMode = true;
@@ -24,7 +26,14 @@ class MySimpleGame extends FlameGame with TapDetector, HasCollisionDetection {
   Future<void> onLoad() async {
     super.onLoad();
 
+    initializeCollisionDetection(
+      mapDimensions: const Rect.fromLTWH(-500, -500, 500, 500),
+      minimumDistance: 150,
+      maxLevels: 1,
+      maxObjects: 9,
+    );
     final playerSprite = await loadSprite('pac_man_0.png');
+    this.playerSprite = playerSprite;
 
     // Define paints for the joystick knob and background
     final knobPaint = BasicPalette.blue.withAlpha(200).paint();
@@ -42,42 +51,6 @@ class MySimpleGame extends FlameGame with TapDetector, HasCollisionDetection {
       ..priority = 10;
 
     world.add(player);
-
-    final random = Random();
-
-    final playerSpace = 200;
-    final double blockSize = 150;
-    final xSteps = (player.maxBounds.x - player.minBounds.x) ~/ blockSize;
-    final ySteps = (player.maxBounds.y - player.minBounds.y) ~/ blockSize;
-
-    for (var i = 0; i < xSteps; i++) {
-      for (var j = 0; j < ySteps; j++) {
-        final isEdge = i == 0 || j == 0 || i == xSteps - 1 || j == ySteps - 1;
-        if (random.nextDouble() > 0.7 || isEdge) {
-          final dx = blockSize * i;
-          final dy = blockSize * j;
-          final posX = player.minBounds.x + dx;
-          final posY = player.minBounds.y + dy;
-
-          if (posX.abs() < playerSpace && posY.abs() < playerSpace) {
-            continue;
-          }
-
-          final position = Vector2(posX, posY);
-          final size = Vector2(blockSize, blockSize);
-          final color = isEdge
-              ? Color.fromARGB(255, 33, 33, 33)
-              : Color.fromARGB(
-                  255,
-                  random.nextInt(256),
-                  random.nextInt(256),
-                  random.nextInt(256),
-                );
-          final rectangle = WorldBlock(position, size, Paint()..color = color);
-          world.add(rectangle);
-        }
-      }
-    }
 
     final shape = Rectangle.fromLTRB(player.minBounds.x, player.minBounds.y, player.maxBounds.x, player.maxBounds.y);
 
@@ -107,6 +80,68 @@ class MySimpleGame extends FlameGame with TapDetector, HasCollisionDetection {
     camera.viewport.add(fireButton);
     if (!USE_ALTERNATIVE_CAMERA) {
       camera.follow(player);
+    }
+
+    resetWorldBlocks();
+  }
+
+  void resetWorldBlocks() async {
+    world.removeAll(world.children.whereType<WorldBlock>());
+    world.removeAll(world.children.whereType<Bullet>());
+    player.position = Vector2(0, 0);
+
+    final random = Random();
+
+    var resetDone = false;
+    var makeReset = false;
+
+    final playerSpace = 200;
+    final double blockSize = 120;
+    final xSteps = (player.maxBounds.x - player.minBounds.x) ~/ blockSize;
+    final ySteps = (player.maxBounds.y - player.minBounds.y) ~/ blockSize;
+
+    for (var i = 0; i < xSteps; i++) {
+      for (var j = 0; j < ySteps; j++) {
+        final isEdge = i == 0 || j == 0 || i == xSteps - 1 || j == ySteps - 1;
+        // if (random.nextDouble() > 0.7 || isEdge) {
+        final dx = blockSize * i;
+        final dy = blockSize * j;
+        final posX = player.minBounds.x + dx;
+        final posY = player.minBounds.y + dy;
+
+        if (posX.abs() < playerSpace && posY.abs() < playerSpace) {
+          if (!resetDone) {
+            makeReset = true;
+          }
+          continue;
+        }
+
+        final position = Vector2(posX, posY);
+        final size = Vector2(blockSize, blockSize);
+        final color = isEdge
+            ? Color.fromARGB(255, 33, 33, 33)
+            : Color.fromARGB(
+                100,
+                random.nextInt(256),
+                random.nextInt(256),
+                random.nextInt(256),
+              );
+        final block = WorldBlock(
+            position,
+            size,
+            Paint()..color = color,
+            makeReset
+                ? WorldBlockType.resetButton
+                : isEdge
+                    ? WorldBlockType.edge
+                    : WorldBlockType.dirt);
+        if (makeReset) {
+          makeReset = false;
+          resetDone = true;
+        }
+        world.add(block);
+        // }
+      }
     }
   }
 
