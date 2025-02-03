@@ -10,8 +10,8 @@ class Player extends SpriteComponent with HasGameRef<MySimpleGame>, CollisionCal
   // JoystickDirection collidedDirection = JoystickDirection.idle;
   Vector2 collidedDelta = Vector2.zero();
 
-  final Vector2 minBounds = Vector2(-1500, -1500);
-  final Vector2 maxBounds = Vector2(1500, 1500);
+  final Vector2 minBounds = Vector2(-worldSize, -worldSize);
+  final Vector2 maxBounds = Vector2(worldSize, worldSize);
 
   final JoystickComponent joystick;
   double speed = 200; // Pixels per second

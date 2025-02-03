@@ -13,11 +13,15 @@ import 'bullet.dart';
 
 const USE_ALTERNATIVE_CAMERA = false;
 
+const double worldSize = 1500;
+
 class MySimpleGame extends FlameGame with TapDetector, HasQuadTreeCollisionDetection {
   late final JoystickComponent joystick;
   late final Player player;
   late final HudButtonComponent fireButton;
   late Sprite playerSprite;
+  int brickCount = 0;
+  late TextComponent brickCounter;
 
   // @override
   // final debugMode = true;
@@ -27,10 +31,11 @@ class MySimpleGame extends FlameGame with TapDetector, HasQuadTreeCollisionDetec
     super.onLoad();
 
     initializeCollisionDetection(
-      mapDimensions: const Rect.fromLTWH(-500, -500, 500, 500),
+      mapDimensions: Rect.fromLTWH(-worldSize, -worldSize, worldSize, worldSize),
+      // mapDimensions: const Rect.fromLTWH(-100, -100, 100, 100),
       minimumDistance: 150,
-      maxLevels: 1,
-      maxObjects: 9,
+      // maxLevels: 1,
+      maxObjects: 100,
     );
     final playerSprite = await loadSprite('pac_man_0.png');
     this.playerSprite = playerSprite;
@@ -82,7 +87,25 @@ class MySimpleGame extends FlameGame with TapDetector, HasQuadTreeCollisionDetec
       camera.follow(player);
     }
 
+    // Add brick counter
+    brickCounter = TextComponent(
+      text: 'Bricks: 0',
+      position: Vector2(10, 10),
+      textRenderer: TextPaint(
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 20.0,
+        ),
+      ),
+    );
+    camera.viewport.add(brickCounter);
+
     resetWorldBlocks();
+  }
+
+  void collectBrick() {
+    brickCount++;
+    brickCounter.text = 'Bricks: $brickCount';
   }
 
   void resetWorldBlocks() async {

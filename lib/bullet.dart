@@ -55,7 +55,7 @@ class Bullet extends PositionComponent with HasGameRef<MySimpleGame>, CollisionC
       } else if (other.blockType == WorldBlockType.resetButton) {
         // gameRef.resetWorldBlocks();
       } else {
-        other.removeFromParent();
+        other.onHit();
       }
     }
   }
