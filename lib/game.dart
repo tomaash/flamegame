@@ -10,15 +10,21 @@ import 'package:flutterfire_game/world_block.dart';
 import 'dart:math';
 import 'player.dart';
 import 'bullet.dart';
+import 'shield.dart';
+import 'brick.dart';
+import 'enemy.dart';
 
 const USE_ALTERNATIVE_CAMERA = false;
 
 const double worldSize = 1500;
 
 class MySimpleGame extends FlameGame with TapDetector, HasQuadTreeCollisionDetection {
+  double _enemySpawnTimer = 0;
+  static const double _enemySpawnInterval = 3.0; // Spawn enemy every 3 seconds
   late final JoystickComponent joystick;
   late final Player player;
   late final HudButtonComponent fireButton;
+  late final HudButtonComponent placeShieldButton;
   late Sprite playerSprite;
   int brickCount = 0;
   late TextComponent brickCounter;
@@ -48,7 +54,7 @@ class MySimpleGame extends FlameGame with TapDetector, HasQuadTreeCollisionDetec
     joystick = JoystickComponent(
         knob: CircleComponent(radius: 15, paint: knobPaint),
         background: CircleComponent(radius: 50, paint: backgroundPaint),
-        margin: const EdgeInsets.only(right: 50, bottom: 60), // Position the joystick
+        margin: const EdgeInsets.only(left: 50, bottom: 60), // Position the joystick
         priority: 100);
 
     player = Player(joystick)
@@ -67,7 +73,7 @@ class MySimpleGame extends FlameGame with TapDetector, HasQuadTreeCollisionDetec
     // Create the fire button component
     fireButton = HudButtonComponent(
       button: CircleComponent(radius: 30, paint: Paint()..color = Colors.red.withAlpha(150)),
-      margin: const EdgeInsets.only(right: 50, top: 50),
+      margin: const EdgeInsets.only(right: 50, bottom: 50),
       onPressed: () {
         // Handle fire button press
         // player.fire();
@@ -83,6 +89,25 @@ class MySimpleGame extends FlameGame with TapDetector, HasQuadTreeCollisionDetec
     );
 
     camera.viewport.add(fireButton);
+
+    // Create the place shield button
+    placeShieldButton = HudButtonComponent(
+      button: CircleComponent(radius: 30, paint: Paint()..color = Colors.blue.withAlpha(150)),
+      margin: const EdgeInsets.only(right: 150, bottom: 50),
+      onPressed: () {
+        if (brickCount > 0) {
+          brickCount--;
+          updateBrickCounter();
+          // Place shield at player's position
+          final angle = player.angle + (pi / 2);
+          final shield = Shield(position: player.position.clone() + Vector2(cos(player.angle), sin(player.angle)) * 50, angle: angle);
+          world.add(shield);
+        }
+      },
+    );
+
+    camera.viewport.add(placeShieldButton);
+
     if (!USE_ALTERNATIVE_CAMERA) {
       camera.follow(player);
     }
@@ -105,6 +130,27 @@ class MySimpleGame extends FlameGame with TapDetector, HasQuadTreeCollisionDetec
 
   void collectBrick() {
     brickCount++;
+    brickCounter.text = 'Bricks: $brickCount';
+  }
+
+  void _spawnEnemy() {
+    final random = Random();
+    final playerSpace = 200.0; // Same as in resetWorldBlocks
+    
+    // Generate random position within the starting area
+    final spawnPosition = Vector2(
+      (random.nextDouble() * 2 - 1) * playerSpace * 0.8, // 80% of playerSpace
+      (random.nextDouble() * 2 - 1) * playerSpace * 0.8,
+    );
+    
+    final enemy = Enemy(
+      position: spawnPosition,
+      playerPosition: player.position,
+    );
+    world.add(enemy);
+  }
+
+  void updateBrickCounter() {
     brickCounter.text = 'Bricks: $brickCount';
   }
 
@@ -171,6 +217,16 @@ class MySimpleGame extends FlameGame with TapDetector, HasQuadTreeCollisionDetec
   @override
   void update(double dt) {
     super.update(dt);
+    
+    // Update enemy spawn timer
+    final enemyCount = world.children.whereType<Enemy>().length;
+    if (enemyCount < 2) {
+      _enemySpawnTimer += dt;
+      if (_enemySpawnTimer >= _enemySpawnInterval) {
+        _enemySpawnTimer = 0;
+        _spawnEnemy();
+      }
+    }
 
     if (USE_ALTERNATIVE_CAMERA) {
       final visibleRect = camera.visibleWorldRect;
